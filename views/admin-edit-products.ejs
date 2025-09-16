@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>admin add-products</title>
+</head>
+<body>
+<form action="/admin/edit-products/<%= product.id %>" method="post" enctype="multipart/form-data">
+    <!-- Product Name -->
+    <label for="p_name">Enter product name:</label>
+    <input type="text" name="p_name" placeholder="Product name" value="<%= product.p_name %>" required>
+
+    <!-- Category (Dropdown) -->
+    <label for="p_category">Select category:</label>
+    <select name="p_category" required>
+        <option value="Electronics" <%= product.p_category === 'Electronics' ? 'selected' : '' %>>Electronics</option>
+        <option value="Clothes" <%= product.p_category === 'Clothes' ? 'selected' : '' %>>Clothes</option>
+        <option value="Books" <%= product.p_category === 'Books' ? 'selected' : '' %>>Books</option>
+        <option value="Home Appliances" <%= product.p_category === 'Home Appliances' ? 'selected' : '' %>>Home Appliances</option>
+        <option value="Accessories" <%= product.p_category === 'Accessories' ? 'selected' : '' %>>Accessories</option>
+    </select>
+
+    <!-- Product Cost -->
+    <label for="p_cost">Enter product cost:</label>
+    <input type="number" name="p_cost" placeholder="Product cost" value="<%= product.p_cost %>" required>
+
+    <!-- Product Image -->
+    <p>Current Image:</p>
+    <img src="<%= product.p_image_url %>" alt="Current image" width="150"><br>
+    
+    <label for="p_image">Upload new product image (optional):</label>
+    <input type="file" name="p_image" accept="image/*">
+
+    <!-- Submit -->
+    <button type="submit">Update Product</button>
+</form>
+
+
+</body>
+</html>

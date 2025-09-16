@@ -1,0 +1,37 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>admin add-products</title>
+</head>
+<body>
+<form action="/admin/add-products" method="post" enctype="multipart/form-data">
+    <!-- Product Name -->
+    <label for="p_name">Enter product name:</label>
+    <input type="text" name="p_name" placeholder="Product name" required>
+
+    <!-- Category (Dropdown) -->
+    <label for="p_category">Select category:</label>
+    <select name="p_category" required>
+        <option value="">-- Choose Category --</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Clothes">Clothes</option>
+        <option value="Books">Books</option>
+        <option value="Home Appliances">Home Appliances</option>
+        <option value="Accessories">Accessories</option>
+    </select>
+
+    <!-- Product Cost -->
+    <label for="p_cost">Enter product cost:</label>
+    <input type="number" name="p_cost" placeholder="Product cost" required>
+
+    <!-- Product Image -->
+    <label for="p_image">Upload product image:</label>
+    <input type="file" name="p_image" accept="image/*" required>
+
+    <!-- Submit -->
+    <button type="submit">Add Product</button>
+</form>
+
+</body>
+</html>
