@@ -4,6 +4,10 @@ import env from "dotenv";
 import session from "express-session";
 import path from "path";
 import multer from "multer";
+import passport from "passport";
+import bcrypt from "bcrypt";
+import { Strategy } from "passport-local";
+import GoogleStrategy from "passport-google-oauth2";
 
 
 
@@ -18,6 +22,10 @@ app.use(session({
     cookie: {maxAge : 1000 * 60 * 60 } //1hr session time
 })
 );
+const saltRounds = 10;
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 const storage = multer.diskStorage({
   destination: "public/uploads/",
@@ -37,6 +45,21 @@ const db = new pg.Client({
     port: parseInt(process.env.PORT),
 });
 db.connect();
+
+
+app.get("/",async(req,res)=>{
+    res.render("index.ejs");
+})
+
+
+app.get("/home",async(req,res)=>{
+    if(req.isAuthenticated()){
+    const result = await db.query("SELECT * FROM products");
+    res.render("home.ejs",{products:result.rows})
+    }else{
+        res.redirect("/login");
+    }
+})
 
 
 app.get("/admin",(req,res)=>{
@@ -159,9 +182,6 @@ app.post("/admin/edit-products/:id", upload.single("p_image"), async (req, res) 
     }
 });
 
-
-
-
 app.get("/admin/delete-products/:id", async (req, res) => {
     const id = req.params.id;
     try {
@@ -174,8 +194,114 @@ app.get("/admin/delete-products/:id", async (req, res) => {
 });
 
 
+// auth pages
+app.get("/auth_page",(req,res)=>{
+    res.render("auth_page.ejs");
+});
+
+app.get("/auth/google",passport.authenticate("google",{
+    scope:["profile","email"],
+}))
+
+app.get("/auth/google/home",passport.authenticate("google",{
+    successRedirect: "/home",
+    failureRedirect:"/",
+}))
+
+passport.use("google", new GoogleStrategy({
+    clientID:process.env.GOOGLE_CLIENT_ID,
+    clientSecret:process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL:process.env.GOOGLE_CALLBACK_URL,
+    userProfileURL:process.env.GOOGLE_USER_PROFILE_URL,
+},
+async(accessToken,refreshToken,profile,cb)=>{
+    try {
+        const userInfo = await db.query("SELECT * FROM users WHERE email = $1",[profile.email]);
+        if((userInfo).rows.length === 0){
+            const user = await db.query("INSERT INTO users (email,password,method) VALUES ($1,$2,$3) RETURNING *",[profile.email,profile.id,"google"]);
+            return cb(null,user.rows[0]);
+        }else{
+            return cb(null,userInfo.rows[0]);
+        }
+    } catch (err) {
+        return cb(err)
+    }
+}
+))
 
 
+
+app.get("/register",(req,res)=>{
+    res.render("register.ejs");
+});
+
+app.get("/login",(req,res)=>{
+    res.render("login.ejs");
+})
+
+app.post("/login",passport.authenticate("local",{
+        successRedirect: "/home",
+        failureRedirect: "/login",
+    })
+);
+
+app.post("/register",async (req,res)=>{
+    const userEmail = req.body.email;
+    const userPassword = req.body.password;
+    try {
+        const result = await db.query("SELECT * FROM users WHERE email = $1",[userEmail]);
+        if(result.rows.length === 0 ){
+            bcrypt.hash(userPassword,saltRounds,async(err,hash)=>{
+                if(err) return err;
+                const userDetails = await db.query("INSERT INTO users (email,password,method) VALUES ($1,$2,$3) RETURNING *",[userEmail,hash,"local"]);
+                console.log(userDetails.rows[0]);
+                req.login(userDetails.rows[0],(err)=>{
+                    if(err) return  console.log(err);
+                    res.redirect("/home")
+                });
+            });
+        }else{
+            res.redirect("/login");
+        }
+    } catch (err) {
+        console.log(err);
+    }
+})
+
+passport.use("local", new Strategy(
+  { usernameField: "email", passwordField: "password" },
+  async function verify(email, password, cb) {
+    try {
+        const result = await db.query("SELECT * FROM users WHERE email = $1",[email]);
+        if(result.rows.length === 0){
+            return cb("user not found")
+        }else{
+            bcrypt.compare(password,result.rows[0].password,(err,valid)=>{
+                if(err) return cb(err);
+                if(valid){
+                    return cb(null,result.rows[0])
+                }else {
+                    return cb(null,false);
+                }
+            });
+        }    
+    } catch (err) {
+        return cb(err);
+    }
+}))
+
+app.get("/logout",(req,res)=>{
+    req.logout(function (err){
+        if(err){
+            return console.log(err);
+        }else{
+            res.redirect("/");
+        }
+    })
+})
+
+passport.serializeUser((user,cb)=>{cb(null,user);});
+passport.deserializeUser((user,cb)=>{cb(null,user);});
 
 app.listen(3000,()=>{
     console.log("http://localhost:3000");
