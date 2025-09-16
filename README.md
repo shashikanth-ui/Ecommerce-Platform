@@ -5,13 +5,13 @@ A full-stack e-commerce web application with product catalog, shopping cart, and
 ## Features
 - Product listing, search, and filtering
 - Shopping cart and checkout system
-- User authentication with Firebase
+- User authentication with Passport & Google OAuth2
 - Admin panel to manage products and orders
 
 ## Tech Stack
 - Frontend: HTML5, CSS3, EJS
 - Backend: Node.js, Express.js
-- Database & Auth: Firebase
+- Database & Auth: Postgres, Passport & Google OaAth2 
 - Tools: Git, VS Code, Linux
 
 ## Installation
