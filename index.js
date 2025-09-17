@@ -51,17 +51,6 @@ app.get("/",async(req,res)=>{
     res.render("index.ejs");
 })
 
-
-app.get("/home",async(req,res)=>{
-    if(req.isAuthenticated()){
-    const result = await db.query("SELECT * FROM products");
-    res.render("home.ejs",{products:result.rows})
-    }else{
-        res.redirect("/login");
-    }
-})
-
-
 app.get("/admin",(req,res)=>{
         if(req.session.isAdmin){
             res.redirect("/admin-home");
@@ -299,6 +288,88 @@ app.get("/logout",(req,res)=>{
         }
     })
 })
+
+
+app.get("/home",async(req,res)=>{
+    if(req.isAuthenticated()){
+    const result = await db.query("SELECT * FROM products");
+    res.render("home.ejs",{products:result.rows})
+    }else{
+        res.redirect("/login");
+    }
+})
+
+
+
+//cart 
+app.get("/cart/:id",async(req,res)=>{
+    if(req.isAuthenticated()){
+        const user_id = req.user.user_id;
+        const p_id = req.params.id;
+        const cart = await db.query("INSERT INTO cart (user_id,product_id) VALUES ($1,$2) ",[user_id,p_id]);
+    }else(
+        res.redirect("/")
+    )
+});
+
+app.get("/view-cart", async (req, res) => {
+  if (req.isAuthenticated()) {
+    const user_id = req.user.user_id;
+
+    try {
+      const result = await db.query(
+        `SELECT c.cart_id, p.id, p.p_name, p.p_category, p.p_cost, p.p_image_url
+         FROM cart c
+         JOIN products p ON c.product_id = p.id
+         WHERE c.user_id = $1`,
+        [user_id]
+      );
+
+      const cartItems = result.rows;
+
+      // ✅ convert p_cost to number
+      const total = cartItems.reduce(
+        (sum, item) => sum + Number(item.p_cost),
+        0
+      );
+
+      res.render("view-cart.ejs", { cartItems, total });
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Error fetching cart");
+    }
+
+  } else {
+    res.redirect("/");
+  }
+});
+
+
+app.post("/remove-cart/:cart_id", async (req, res) => {
+  if (req.isAuthenticated()) {
+    const user_id = req.user.user_id;
+    const cart_id = req.params.cart_id;
+
+    try {
+      await db.query(
+        "DELETE FROM cart WHERE cart_id = $1 AND user_id = $2",
+        [cart_id, user_id]
+      );
+      res.redirect("/view-cart");
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Error removing item from cart");
+    }
+
+  } else {
+    res.redirect("/");
+  }
+});
+
+
+
+
 
 passport.serializeUser((user,cb)=>{cb(null,user);});
 passport.deserializeUser((user,cb)=>{cb(null,user);});

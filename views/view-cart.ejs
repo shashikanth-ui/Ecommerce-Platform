@@ -1,0 +1,27 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>view - cart</title>
+</head>
+<body>
+<a href="/home">X</a><br>
+<% if (cartItems.length === 0) { %>
+  <h2>Your cart is empty 🛒</h2>
+<% } else { %>
+  <ul>
+    <% cartItems.forEach(item => { %>
+      <li>
+        <%= item.p_name %> - ₹<%= item.p_cost %>
+        <form action="/remove-cart/<%= item.cart_id %>" method="POST" style="display:inline;">
+          <button type="submit">Remove</button>
+        </form>
+      </li>
+    <% }) %>
+  </ul>
+
+  <h3>Total: ₹<%= total %></h3>
+<% } %>
+
+</body>
+</html>
